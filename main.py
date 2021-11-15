@@ -1,6 +1,7 @@
 from nachess import *
 import pygame
 
+
 def main():
     field = Field()
     field.draw_classic()
