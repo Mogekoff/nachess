@@ -3,8 +3,8 @@ import pygame
 
 
 def main():
-    field = Field()
-    field.draw_classic()
+    mv = [(1,7,2,5),(4,1,4,3)]
+    field = Field(None, mv)
     field.print()
     while True:
         x, y, X, Y = int(input()), int(input()), int(input()), int(input())

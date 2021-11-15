@@ -26,15 +26,20 @@ class Field:  # класс игрового поля
     field = None
     moves = []
 
-    def __init__(self, field=None):  # конструктор принимает массив игрового поля
+    def __init__(self, field=None, moves=None):  # конструктор принимает массив игрового поля
         if field is None:  # если массив не предоставлен
             self.field = [0] * 8  # создаем двумерный массив
             for i in range(7, -1, -1):  # 8х8 ячеек
                 self.field[i] = [0] * 8  #
                 for j in range(8):  #
                     self.field[i][j] = None  # и заполняем его 'None'
+            self.draw_classic()
         else:
             self.field = field
+        if moves is not None:
+            for i in range(len(moves)):
+                self.move(moves[i][0], moves[i][1], moves[i][2], moves[i][3])
+            self.moves = moves
 
     def print(self):  # функция вывода игрового поля
         cell = False  # итератор для чередования цвета клеток поля
@@ -53,7 +58,7 @@ class Field:  # класс игрового поля
             print()
         print('  ' + figures['coordinates'])  # вывод нижних координат
 
-    def move(self, from_x, from_y, to_x, to_y):         # функция, делающая ходы на доске
+    def move(self, from_x, from_y, to_x, to_y):  # функция, делающая ходы на доске
         if self.field[from_x][from_y] is not None and self.field[from_x][from_y].can_move(to_x, to_y):
             self.field[to_x][to_y] = self.field[from_x][from_y]  # если да, ходим
             self.field[from_x][from_y] = None  # удаляем фигуру из прошлой клетки
@@ -65,12 +70,16 @@ class Field:  # класс игрового поля
 
     def draw_classic(self):  # устанавливает фигуры в стандартное шахматное расположение
         for i in range(8):
-            self.field[i][1] = Pawn(i, 1, False, self.field)
-            self.field[i][6] = Pawn(i, 6, True, self.field)
-        self.field[1][0], self.field[6][0] = Knight(1, 0, False, self.field), Knight(6, 0, False, self.field)
-        self.field[1][7], self.field[6][7] = Knight(1, 7, True, self.field), Knight(6, 7, True, self.field)
-        self.field[0][0], self.field[7][0] = Rook(0, 0, False, self.field), Rook(7, 0, False, self.field)
-        self.field[0][7], self.field[7][7] = Rook(0, 7, True, self.field), Rook(7, 7, True, self.field)
+            self.field[i][1] = Pawn(i, 1, False, self.field)    # пешки белых
+            self.field[i][6] = Pawn(i, 6, True, self.field)     # пешки черных
+        self.field[1][0], self.field[6][0] = Knight(1, 0, False, self.field), Knight(6, 0, False, self.field)  # кони
+        self.field[1][7], self.field[6][7] = Knight(1, 7, True, self.field), Knight(6, 7, True, self.field)    #
+        self.field[0][0], self.field[7][0] = Rook(0, 0, False, self.field), Rook(7, 0, False, self.field)      # ладьи
+        self.field[0][7], self.field[7][7] = Rook(0, 7, True, self.field), Rook(7, 7, True, self.field)        #
+        self.field[2][0], self.field[5][0] = Bishop(2, 0, False, self.field), Bishop(5, 0, False, self.field)  # слоны
+        self.field[2][7], self.field[5][7] = Bishop(2, 7, True, self.field), Bishop(5, 7, True, self.field)    #
+        self.field[3][0], self.field[3][7] = Queen(3, 0, False, self.field), Queen(3, 7, True, self.field)
+        self.field[4][0], self.field[4][7] = King(4, 0, False, self.field), King(4, 7, True, self.field)
 
 
 class Pawn(Figure):  # класс пешки
@@ -102,14 +111,7 @@ class Knight(Figure):  # класс фигуры "конь"
 
     def can_move(self, x, y):
         if super().can_move(x, y):
-            if (self.x - 1 == x and self.y - 2 == y or  # все возможные ходы коня
-                    self.x - 2 == x and self.y - 1 == y or
-                    self.x - 2 == x and self.y + 1 == y or
-                    self.x - 1 == x and self.y + 2 == y or
-                    self.x + 2 == x and self.y + 1 == y or
-                    self.x + 1 == x and self.y + 2 == y or
-                    self.x + 2 == x and self.y - 1 == y or
-                    self.x + 1 == x and self.y - 2 == y):
+            if (self.x - x) ** 2 + (self.y - y) ** 2 == 5:
                 return True
         return False
 
@@ -155,3 +157,31 @@ class Bishop(Figure):  # класс слона
                 return True
         return False
 
+
+class Queen(Bishop, Rook):  # класс фигуры "ферзь", наследуется от слона и ладьи
+    def __init__(self, x, y, color, field):
+        Figure.__init__(self, x, y, color, field)
+        if color:
+            self.icon = figures['black']['queen']
+        else:
+            self.icon = figures['white']['queen']
+
+    def can_move(self, x, y):
+        if Bishop.can_move(self, x, y) or Rook.can_move(self, x, y):
+            return True
+        return False
+
+
+class King(Figure):  # класс фигуры "конь"
+    def __init__(self, x, y, color, field):
+        super().__init__(x, y, color, field)
+        if color:
+            self.icon = figures['black']['king']
+        else:
+            self.icon = figures['white']['king']
+
+    def can_move(self, x, y):
+        if super().can_move(x, y):
+            if (-1 <= self.x - x <= 1) and (-1 <= self.y - y <= 1):
+                return True
+        return False
