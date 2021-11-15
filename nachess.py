@@ -66,7 +66,8 @@ class Field:
             self.field[i][6] = Pawn(i, 6, True)
         self.field[1][0], self.field[6][0] = Knight(1, 0, False), Knight(6, 0, False)
         self.field[1][7], self.field[6][7] = Knight(1, 7, True), Knight(6, 7, True)
-
+        self.field[0][0], self.field[7][0] = Rook(0, 0, False), Rook(7, 0, False)
+        self.field[0][7], self.field[7][7] = Rook(0, 7, True), Rook(7, 7, True)
 
 field = Field()
 
@@ -120,17 +121,43 @@ class Knight(Figure):
                 super().move(x, y)
 
 
+class Rook(Figure):
+    def __init__(self, x, y, color):
+        super().__init__(x, y, color)
+        if color:
+            self.icon = figures['black']['rook']
+        else:
+            self.icon = figures['white']['rook']
+
+    def can_move(self, x, y):
+        if super().can_move(x, y):
+            inc = 1
+            if self.y > y or self.x > x:
+                inc = -1
+            if self.x == x:
+                for i in range(self.y+inc, y, inc):
+                    if field.field[x][i] is not None:
+                        return False
+            elif self.y == y:
+                for i in range(self.x + inc, x, inc):
+                    if field.field[i][y] is not None:
+                        return False
+            else:
+                return False
+            return True
+        return False
+
+    def move(self, x, y):
+        if self.can_move(x, y):
+                super().move(x, y)
 
 
 
 field.draw_classic()
-field.field[1][1].move(1, 2)
-field.field[2][1].move(2, 3)
-field.field[3][1].move(3, 4)
-field.field[4][1].move(4, 1)
-field.field[4][1].move(5, 0)
-
-field.field[1][7].move(0, 7)
-field.field[1][7].move(0, 6)
-field.field[1][7].move(0, 5)
+field.draw_classic()
+field.print()
+while True:
+    x,y,X,Y = int(input()),int(input()),int(input()),int(input())
+    field.field[x][y].move(X,Y)
+    field.print()
 field.print()
