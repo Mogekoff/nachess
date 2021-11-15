@@ -45,7 +45,7 @@ class Field:
     def print(self):
         cell = False
         for i in range(7, -1, -1):
-            #print(i + 1, end=' ')
+            # print(i + 1, end=' ')
             print(i, end=' ')
             for j in range(8):
                 if self.field[j][i] is not None:
@@ -57,7 +57,7 @@ class Field:
                 cell = not cell
             cell = not cell
             print()
-        #print('  A B C D E F G H')
+        # print('  A B C D E F G H')
         print('  0 1 2 3 4 5 6 7')
 
     def draw_classic(self):
@@ -116,7 +116,7 @@ class Knight(Figure):
 
     def move(self, x, y):
         if self.can_move(x, y):
-                super().move(x, y)
+            super().move(x, y)
 
 
 class Rook(Figure):
@@ -133,7 +133,7 @@ class Rook(Figure):
             if self.y > y or self.x > x:
                 inc = -1
             if self.x == x:
-                for i in range(self.y+inc, y, inc):
+                for i in range(self.y + inc, y, inc):
                     if self.field[x][i] is not None:
                         return False
             elif self.y == y:
@@ -147,12 +147,12 @@ class Rook(Figure):
 
     def move(self, x, y):
         if self.can_move(x, y):
-                super().move(x, y)
+            super().move(x, y)
 
 
 class Bishop(Figure):
-    def __init__(self, x, y, color):
-        super().__init__(x, y, color)
+    def __init__(self, x, y, color, field):
+        super().__init__(x, y, color, field)
         if color:
             self.icon = figures['black']['bishop']
         else:
@@ -166,4 +166,4 @@ class Bishop(Figure):
 
     def move(self, x, y):
         if self.can_move(x, y):
-                super().move(x, y)
+            super().move(x, y)
