@@ -8,7 +8,7 @@ def main():
     field.print()
     while True:
         x, y, X, Y = int(input()), int(input()), int(input()), int(input())
-        field.field[x][y].move(X, Y)
+        field.move(x, y, X, Y)
         field.print()
 
 
