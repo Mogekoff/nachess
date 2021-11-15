@@ -54,7 +54,7 @@ class Field:  # класс игрового поля
         print('  ' + figures['coordinates'])  # вывод нижних координат
 
     def move(self, from_x, from_y, to_x, to_y):         # функция, делающая ходы на доске
-        if self.field[from_x][from_y].can_move(to_x, to_y):       # проверяем, может ли фигура сходить
+        if self.field[from_x][from_y] is not None and self.field[from_x][from_y].can_move(to_x, to_y):
             self.field[to_x][to_y] = self.field[from_x][from_y]  # если да, ходим
             self.field[from_x][from_y] = None  # удаляем фигуру из прошлой клетки
             self.field[to_x][to_y].x = to_x  # меняем координаты фигуры
