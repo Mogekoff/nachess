@@ -1,30 +1,30 @@
 from config import figures
 
-field = None
-
 
 class Figure:
     x = 0
     y = 0
     color = None
     icon = None
+    field = None
 
-    def __init__(self, x, y, color):
+    def __init__(self, x, y, color, field):
         self.x = x
         self.y = y
         self.color = color
+        self.field = field
 
     def move(self, x, y):
         if self.can_move(x, y):
-            field.field[x][y] = self
-            field.field[self.x][self.y] = None
+            self.field[x][y] = self
+            self.field[self.x][self.y] = None
             self.x = x
             self.y = y
 
     def can_move(self, x, y):
         if (x < 0 or x > 7 or y < 0 or y > 7 or
                 self.x == x and self.y == y or
-                field.field[x][y] is not None and self.color == field.field[x][y].color):
+                self.field[x][y] is not None and self.color == self.field[x][y].color):
             return False
         return True
 
@@ -33,7 +33,7 @@ class Field:
     field = None
 
     def __init__(self, field=None):
-        if field == None:
+        if field is None:
             self.field = [0] * 8
             for i in range(7, -1, -1):
                 self.field[i] = [0] * 8
@@ -48,7 +48,7 @@ class Field:
             #print(i + 1, end=' ')
             print(i, end=' ')
             for j in range(8):
-                if self.field[j][i] != None:
+                if self.field[j][i] is not None:
                     print(self.field[j][i].icon, end=' ')
                 elif cell:
                     print(figures['black']['cell'], end=' ')
@@ -62,19 +62,17 @@ class Field:
 
     def draw_classic(self):
         for i in range(8):
-            self.field[i][1] = Pawn(i, 1, False)
-            self.field[i][6] = Pawn(i, 6, True)
-        self.field[1][0], self.field[6][0] = Knight(1, 0, False), Knight(6, 0, False)
-        self.field[1][7], self.field[6][7] = Knight(1, 7, True), Knight(6, 7, True)
-        self.field[0][0], self.field[7][0] = Rook(0, 0, False), Rook(7, 0, False)
-        self.field[0][7], self.field[7][7] = Rook(0, 7, True), Rook(7, 7, True)
-
-field = Field()
+            self.field[i][1] = Pawn(i, 1, False, self.field)
+            self.field[i][6] = Pawn(i, 6, True, self.field)
+        self.field[1][0], self.field[6][0] = Knight(1, 0, False, self.field), Knight(6, 0, False, self.field)
+        self.field[1][7], self.field[6][7] = Knight(1, 7, True, self.field), Knight(6, 7, True, self.field)
+        self.field[0][0], self.field[7][0] = Rook(0, 0, False, self.field), Rook(7, 0, False, self.field)
+        self.field[0][7], self.field[7][7] = Rook(0, 7, True, self.field), Rook(7, 7, True, self.field)
 
 
 class Pawn(Figure):
-    def __init__(self, x, y, color):
-        super().__init__(x, y, color)
+    def __init__(self, x, y, color, field):
+        super().__init__(x, y, color, field)
         if color:
             self.icon = figures['black']['pawn']
         else:
@@ -86,7 +84,7 @@ class Pawn(Figure):
                  (not self.color and (self.y - y == -2 or self.y - y == -1)) or
                  (self.color and (self.y - y == 2 or self.y - y == 1))) or
                     ((self.x - 1 == x or self.x - 1) and
-                     field.field[x][y] is not None and not self.color == field.field[x][y].color)):
+                     self.field[x][y] is not None and not self.color == self.field[x][y].color)):
                 return True
         return False
 
@@ -96,8 +94,8 @@ class Pawn(Figure):
 
 
 class Knight(Figure):
-    def __init__(self, x, y, color):
-        super().__init__(x, y, color)
+    def __init__(self, x, y, color, field):
+        super().__init__(x, y, color, field)
         if color:
             self.icon = figures['black']['knight']
         else:
@@ -122,8 +120,8 @@ class Knight(Figure):
 
 
 class Rook(Figure):
-    def __init__(self, x, y, color):
-        super().__init__(x, y, color)
+    def __init__(self, x, y, color, field):
+        super().__init__(x, y, color, field)
         if color:
             self.icon = figures['black']['rook']
         else:
@@ -136,11 +134,11 @@ class Rook(Figure):
                 inc = -1
             if self.x == x:
                 for i in range(self.y+inc, y, inc):
-                    if field.field[x][i] is not None:
+                    if self.field[x][i] is not None:
                         return False
             elif self.y == y:
                 for i in range(self.x + inc, x, inc):
-                    if field.field[i][y] is not None:
+                    if self.field[i][y] is not None:
                         return False
             else:
                 return False
@@ -152,12 +150,20 @@ class Rook(Figure):
                 super().move(x, y)
 
 
+class Bishop(Figure):
+    def __init__(self, x, y, color):
+        super().__init__(x, y, color)
+        if color:
+            self.icon = figures['black']['bishop']
+        else:
+            self.icon = figures['white']['bishop']
 
-field.draw_classic()
-field.draw_classic()
-field.print()
-while True:
-    x,y,X,Y = int(input()),int(input()),int(input()),int(input())
-    field.field[x][y].move(X,Y)
-    field.print()
-field.print()
+    def can_move(self, x, y):
+        if super().can_move(x, y):
+            if abs(self.x - x) == abs(self.y - y):
+                return True
+        return False
+
+    def move(self, x, y):
+        if self.can_move(x, y):
+                super().move(x, y)
