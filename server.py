@@ -1,6 +1,6 @@
+import socket
 import sys
 from config import ip, port
-import socket
 
 net = 0
 sock = None
