@@ -78,8 +78,8 @@ class Field:  # класс игрового поля
         self.field[0][7], self.field[7][7] = Rook(0, 7, True, self.field), Rook(7, 7, True, self.field)        #
         self.field[2][0], self.field[5][0] = Bishop(2, 0, False, self.field), Bishop(5, 0, False, self.field)  # слоны
         self.field[2][7], self.field[5][7] = Bishop(2, 7, True, self.field), Bishop(5, 7, True, self.field)    #
-        self.field[3][0], self.field[3][7] = Queen(3, 0, False, self.field), Queen(3, 7, True, self.field)
-        self.field[4][0], self.field[4][7] = King(4, 0, False, self.field), King(4, 7, True, self.field)
+        self.field[3][0], self.field[3][7] = Queen(3, 0, False, self.field), Queen(3, 7, True, self.field)     # ферзи
+        self.field[4][0], self.field[4][7] = King(4, 0, False, self.field), King(4, 7, True, self.field)       # короли
 
 
 class Pawn(Figure):  # класс пешки
@@ -145,7 +145,7 @@ class Rook(Figure):  # класс ладьи
             self.icon = figures['white']['rook']
 
     def can_move(self, x, y):
-        if super().can_move(x, y):
+        if Figure.can_move(self, x, y):
             inc = 1  # инкремент, решающий куда двигаться, вперед или назад
             if self.y > y or self.x > x:  #
                 inc = -1  #
@@ -173,8 +173,16 @@ class Bishop(Figure):  # класс слона
             self.icon = figures['white']['bishop']
 
     def can_move(self, x, y):
-        if super().can_move(x, y):
+        if Figure.can_move(self, x, y):
             if abs(self.x - x) == abs(self.y - y):  # проверка на возможность хода на эту клетку
+                inc_x, inc_y = 1, 1
+                if self.x > x:
+                    inc_x = -1
+                if self.y > y:
+                    inc_y = -1
+                for i in range(1, abs(self.x-x), 1):
+                    if self.field[self.x + i * inc_x][self.y + i * inc_y] is not None:
+                        return False
                 return True
         return False
 
