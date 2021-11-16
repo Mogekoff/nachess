@@ -83,21 +83,35 @@ class Field:  # класс игрового поля
 
 
 class Pawn(Figure):  # класс пешки
+    first_move = False
+
     def __init__(self, x, y, color, field):
         super().__init__(x, y, color, field)
         if color:
+            if y == 6:
+                self.first_move = True
             self.icon = figures['black']['pawn']
         else:
+            if y == 1:
+                self.first_move = True
             self.icon = figures['white']['pawn']
 
     def can_move(self, x, y):
         if super().can_move(x, y):  # вызов базовой проверки хода родительского класса "фигура"
-            if ((self.x == x and  # ход пешки вперед на 1 или 2 клетки...
-                 (not self.color and (self.y - y == -2 or self.y - y == -1)) or  # для белой пешки
-                 (self.color and (self.y - y == 2 or self.y - y == 1))) or  # для черной пешки
-                    ((self.x - 1 == x or self.x - 1) and  # ход вбок при рубке
-                     self.field[x][y] is not None and not self.color == self.field[x][y].color)):  # только при рубке
-                return True
+            sign = -1
+            if self.color:
+                sign = 1
+            if self.x == x and self.field[x][y] is None:  # ход пешки вперед
+                if self.first_move and self.y - y == 2*sign and self.field[x][y + sign] is None:
+                    self.first_move = False
+                    return True                 # ход на две клетки
+                elif self.y - y == 1*sign:
+                    self.first_move = False
+                    return True                 # ход на одну клетку
+            elif self.x - 1 == x or self.x + 1 == x:
+                if self.y - sign == y:
+                    if self.field[x][y] is not None and self.color != self.field[x][y].color:
+                        return True             # рубка по диагонали
         return False
 
 
@@ -117,11 +131,17 @@ class Knight(Figure):  # класс фигуры "конь"
 
 
 class Rook(Figure):  # класс ладьи
+    first_move = False
+
     def __init__(self, x, y, color, field):
         super().__init__(x, y, color, field)
         if color:
+            if x == 0 and y == 7 or x == 7 and y == 7:
+                self.first_move = True
             self.icon = figures['black']['rook']
         else:
+            if x == 0 and y == 0 or x == 7 and y == 0:
+                self.first_move = True
             self.icon = figures['white']['rook']
 
     def can_move(self, x, y):
@@ -139,6 +159,7 @@ class Rook(Figure):  # класс ладьи
                         return False  # если встретили препятствие по пути
             else:
                 return False  # если ходим не по горизонтали и не вертикали
+            self.first_move = False
             return True  # если прошли прошлые две проверки
         return False  # если не прошли базовую проверку
 
@@ -173,15 +194,22 @@ class Queen(Bishop, Rook):  # класс фигуры "ферзь", наслед
 
 
 class King(Figure):  # класс фигуры "конь"
+    first_move = False
+
     def __init__(self, x, y, color, field):
         super().__init__(x, y, color, field)
         if color:
+            if x == 4 and y == 7:
+                self.first_move = True
             self.icon = figures['black']['king']
         else:
+            if x == 4 and y == 0:
+                self.first_move = True
             self.icon = figures['white']['king']
 
     def can_move(self, x, y):
         if super().can_move(x, y):
             if (-1 <= self.x - x <= 1) and (-1 <= self.y - y <= 1):
+                self.first_move = False
                 return True
         return False

@@ -3,7 +3,7 @@ import pygame
 
 
 def main():
-    mv = [(1,7,2,5),(4,1,4,3)]
+    mv = [(1,7,2,5),(4,1,4,3),(1,6,1,4),(1,4,1,3),(1,3,1,2)]
     field = Field(None, mv)
     field.print()
     while True:
