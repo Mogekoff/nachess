@@ -89,7 +89,6 @@ class Field:  # класс игрового поля
 
 
 class Pawn(Figure):  # класс пешки
-    first_move = False
 
     def __init__(self, x, y, color, field):
         super().__init__(x, y, color, field)
@@ -108,11 +107,10 @@ class Pawn(Figure):  # класс пешки
             if self.color:
                 sign = 1
             if self.x == x and self.field[x][y] is None:  # ход пешки вперед
-                if self.first_move and self.y - y == 2*sign and self.field[x][y + sign] is None:
-                    self.first_move = False
+                if ((not self.color and self.y == 1 or self.color and self.y == 6)
+                        and self.y - y == 2*sign and self.field[x][y + sign] is None):
                     return True                 # ход на две клетки
                 elif self.y - y == 1*sign:
-                    self.first_move = False
                     return True                 # ход на одну клетку
             elif self.x - 1 == x or self.x + 1 == x:
                 if self.y - sign == y:
