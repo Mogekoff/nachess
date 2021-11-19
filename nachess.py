@@ -41,19 +41,25 @@ class Field:  # класс игрового поля
                 self.move(moves[i][0], moves[i][1], moves[i][2], moves[i][3])
             self.moves = moves
 
-    def print(self):  # функция вывода игрового поля
+    def print(self, x=None, y=None):  # функция вывода игрового поля
+        add_color = ''
         cell = False  # итератор для чередования цвета клеток поля
         for i in range(7, -1, -1):
             # print(i + 1, end=' ')
             print(i, end=' ')  # выводит номер клетки
             for j in range(8):
-                if self.field[j][i] is not None:  # если на клетке есть фигура
-                    print(self.field[j][i].icon, end=' ')  # вывести икноку фигуры
-                elif cell:  # если фигуры нет и клетка черная (True)
-                    print(figures['black']['cell'], end=' ')  # вывести символ из массива figures из config.py
+                if x is not None and y is not None and self.field[x][y].can_move(j, i):
+                    add_color = '\033[32m'
                 else:
-                    print(figures['white']['cell'], end=' ')
+                    add_color = ''
+                if self.field[j][i] is not None:  # если на клетке есть фигура
+                    print(add_color + self.field[j][i].icon, end='')  # вывести икноку фигуры
+                elif cell:  # если фигуры нет и клетка черная (True)
+                    print(add_color + figures['black']['cell'], end='')  # вывести символ из массива figures из config.py
+                else:
+                    print(add_color + figures['white']['cell'], end='')
                 cell = not cell  # чередовать цвет клетки
+                print('\033[0m', end=' ')
             cell = not cell  # повтор цвета в конце строки
             print()
         print('  ' + figures['coordinates'])  # вывод нижних координат

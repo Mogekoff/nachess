@@ -7,9 +7,14 @@ def main():
     field = Field(None, mv)
     field.print()
     while True:
-        x, y, X, Y = int(input()), int(input()), int(input()), int(input())
-        field.move(x, y, X, Y)
-        field.print()
+        cmd_input = input('nachess> ')
+        cmd_split = cmd_input.split(' ')
+        if cmd_split[0] == 'how':
+            field.print(int(cmd_split[1]),int(cmd_split[2]))
+        elif cmd_split[0] == 'go':
+            x, y, X, Y = int(cmd_split[1]), int(cmd_split[2]), int(cmd_split[3]), int(cmd_split[4])
+            field.move(x, y, X, Y)
+            field.print()
 
 
 if __name__ == '__main__':
