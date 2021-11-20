@@ -39,7 +39,6 @@ class Field:  # класс игрового поля
         if moves is not None:
             for i in range(len(moves)):
                 self.move(moves[i][0], moves[i][1], moves[i][2], moves[i][3])
-            self.moves = moves
 
     def print(self, x=None, y=None):  # функция вывода игрового поля
         add_color = ''
@@ -66,13 +65,23 @@ class Field:  # класс игрового поля
 
     def move(self, from_x, from_y, to_x, to_y):  # функция, делающая ходы на доске
         if self.field[from_x][from_y] is not None and self.field[from_x][from_y].can_move(to_x, to_y):
+            self.moves.append((from_x, from_y, to_x, to_y, self.field[to_x][to_y]))  # сохраняем ход
             self.field[to_x][to_y] = self.field[from_x][from_y]  # если да, ходим
             self.field[from_x][from_y] = None  # удаляем фигуру из прошлой клетки
             self.field[to_x][to_y].x = to_x  # меняем координаты фигуры
             self.field[to_x][to_y].y = to_y  # на новые
-            self.moves.append((from_x, from_y, to_x, to_y))  # сохраняем ход
             return True
         return False
+
+    def backtrack(self):
+        if len(self.moves) > 0:
+            last_move = self.moves[-1]
+            back_figure = self.field[last_move[2]][last_move[3]]
+            back_figure.x = last_move[0]
+            back_figure.y = last_move[1]
+            self.field[last_move[0]][last_move[1]] = back_figure
+            self.field[last_move[2]][last_move[3]] = last_move[4]
+            self.moves.pop()
 
     def draw_classic(self):  # устанавливает фигуры в стандартное шахматное расположение
         for i in range(8):
