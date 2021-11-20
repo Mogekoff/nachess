@@ -78,6 +78,7 @@ class Field:  # класс игрового поля
             self.moves.append((from_x, from_y, to_x, to_y, None))
             self.field[bad_pawn.x][bad_pawn.y] = None
             self.field[to_x][to_y] = self.field[from_x][from_y]
+            self.field[from_x][from_y] = None
             return True
         return False
 
