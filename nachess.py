@@ -47,14 +47,15 @@ class Field:  # класс игрового поля
             # print(i + 1, end=' ')
             print(i, end=' ')  # выводит номер клетки
             for j in range(8):
-                if x is not None and y is not None and self.field[x][y].can_move(j, i):
+                if x is not None and y is not None and (self.field[x][y].can_move(j, i) or self.el_passant(x, y, j, i)):
                     add_color = '\033[32m'
                 else:
                     add_color = ''
                 if self.field[j][i] is not None:  # если на клетке есть фигура
                     print(add_color + self.field[j][i].icon, end='')  # вывести икноку фигуры
                 elif cell:  # если фигуры нет и клетка черная (True)
-                    print(add_color + figures['black']['cell'], end='')  # вывести символ из массива figures из config.py
+                    print(add_color + figures['black']['cell'],
+                          end='')  # вывести символ из массива figures из config.py
                 else:
                     print(add_color + figures['white']['cell'], end='')
                 cell = not cell  # чередовать цвет клетки
@@ -71,6 +72,31 @@ class Field:  # класс игрового поля
             self.field[to_x][to_y].x = to_x  # меняем координаты фигуры
             self.field[to_x][to_y].y = to_y  # на новые
             return True
+        elif self.el_passant(from_x, from_y, to_x, to_y):
+            bad_pawn = self.field[self.moves[-1][2]][self.moves[-1][3]]
+            self.moves.append((bad_pawn.x, bad_pawn.y, bad_pawn.x, bad_pawn.y, bad_pawn))  # запись рубки на прох.
+            self.moves.append((from_x, from_y, to_x, to_y, None))
+            self.field[bad_pawn.x][bad_pawn.y] = None
+            self.field[to_x][to_y] = self.field[from_x][from_y]
+            return True
+        return False
+
+    def el_passant(self, from_x, from_y, to_x, to_y):
+        last_move = self.moves[-1]
+        bad_pawn = self.field[last_move[2]][last_move[3]]  # фигура из последнего хода
+        my_pawn = self.field[from_x][from_y]
+        if not(isinstance(bad_pawn, Pawn) and abs(bad_pawn.y - last_move[1]) == 2):    # пешка противника это пешка и сходила на 2
+            return False
+        if not(isinstance(my_pawn, Pawn) and bad_pawn.color != my_pawn.color):  # моя пешка это пешка и другого цвета
+            return False
+        if not(to_x == bad_pawn.x):
+            return False
+        sign = 1
+        if my_pawn.color:
+            sign = -1
+        if self.field[to_x][from_y] == bad_pawn:
+            if to_y == bad_pawn.y + sign:
+                return True
         return False
 
     def backtrack(self):
@@ -85,16 +111,16 @@ class Field:  # класс игрового поля
 
     def draw_classic(self):  # устанавливает фигуры в стандартное шахматное расположение
         for i in range(8):
-            self.field[i][1] = Pawn(i, 1, False, self.field)    # пешки белых
-            self.field[i][6] = Pawn(i, 6, True, self.field)     # пешки черных
+            self.field[i][1] = Pawn(i, 1, False, self.field)  # пешки белых
+            self.field[i][6] = Pawn(i, 6, True, self.field)  # пешки черных
         self.field[1][0], self.field[6][0] = Knight(1, 0, False, self.field), Knight(6, 0, False, self.field)  # кони
-        self.field[1][7], self.field[6][7] = Knight(1, 7, True, self.field), Knight(6, 7, True, self.field)    #
-        self.field[0][0], self.field[7][0] = Rook(0, 0, False, self.field), Rook(7, 0, False, self.field)      # ладьи
-        self.field[0][7], self.field[7][7] = Rook(0, 7, True, self.field), Rook(7, 7, True, self.field)        #
+        self.field[1][7], self.field[6][7] = Knight(1, 7, True, self.field), Knight(6, 7, True, self.field)  #
+        self.field[0][0], self.field[7][0] = Rook(0, 0, False, self.field), Rook(7, 0, False, self.field)  # ладьи
+        self.field[0][7], self.field[7][7] = Rook(0, 7, True, self.field), Rook(7, 7, True, self.field)  #
         self.field[2][0], self.field[5][0] = Bishop(2, 0, False, self.field), Bishop(5, 0, False, self.field)  # слоны
-        self.field[2][7], self.field[5][7] = Bishop(2, 7, True, self.field), Bishop(5, 7, True, self.field)    #
-        self.field[3][0], self.field[3][7] = Queen(3, 0, False, self.field), Queen(3, 7, True, self.field)     # ферзи
-        self.field[4][0], self.field[4][7] = King(4, 0, False, self.field), King(4, 7, True, self.field)       # короли
+        self.field[2][7], self.field[5][7] = Bishop(2, 7, True, self.field), Bishop(5, 7, True, self.field)  #
+        self.field[3][0], self.field[3][7] = Queen(3, 0, False, self.field), Queen(3, 7, True, self.field)  # ферзи
+        self.field[4][0], self.field[4][7] = King(4, 0, False, self.field), King(4, 7, True, self.field)  # короли
 
 
 class Pawn(Figure):  # класс пешки
@@ -117,14 +143,14 @@ class Pawn(Figure):  # класс пешки
                 sign = 1
             if self.x == x and self.field[x][y] is None:  # ход пешки вперед
                 if ((not self.color and self.y == 1 or self.color and self.y == 6)
-                        and self.y - y == 2*sign and self.field[x][y + sign] is None):
-                    return True                 # ход на две клетки
-                elif self.y - y == 1*sign:
-                    return True                 # ход на одну клетку
+                        and self.y - y == 2 * sign and self.field[x][y + sign] is None):
+                    return True  # ход на две клетки
+                elif self.y - y == 1 * sign:
+                    return True  # ход на одну клетку
             elif self.x - 1 == x or self.x + 1 == x:
                 if self.y - sign == y:
                     if self.field[x][y] is not None and self.color != self.field[x][y].color:
-                        return True             # рубка по диагонали
+                        return True  # рубка по диагонали
         return False
 
 
@@ -193,7 +219,7 @@ class Bishop(Figure):  # класс слона
                     inc_x = -1
                 if self.y > y:
                     inc_y = -1
-                for i in range(1, abs(self.x-x), 1):
+                for i in range(1, abs(self.x - x), 1):
                     if self.field[self.x + i * inc_x][self.y + i * inc_y] is not None:
                         return False
                 return True
