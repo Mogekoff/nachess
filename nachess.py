@@ -41,7 +41,6 @@ class Field:  # класс игрового поля
                 self.move(moves[i][0], moves[i][1], moves[i][2], moves[i][3])
 
     def print(self, x=None, y=None):  # функция вывода игрового поля
-        add_color = ''
         cell = False  # итератор для чередования цвета клеток поля
         for i in range(7, -1, -1):
             # print(i + 1, end=' ')
@@ -87,7 +86,7 @@ class Field:  # класс игрового поля
         last_move = self.moves[-1]
         bad_pawn = self.field[last_move[2]][last_move[3]]  # фигура из последнего хода
         my_pawn = self.field[from_x][from_y]
-        if not(isinstance(bad_pawn, Pawn) and abs(bad_pawn.y - last_move[1]) == 2):    # пешка противника это пешка и сходила на 2
+        if not(isinstance(bad_pawn, Pawn) and abs(bad_pawn.y - last_move[1]) == 2):  # пешка противника сходила на 2
             return False
         if not(isinstance(my_pawn, Pawn) and bad_pawn.color != my_pawn.color):  # моя пешка это пешка и другого цвета
             return False
