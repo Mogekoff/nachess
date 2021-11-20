@@ -65,20 +65,21 @@ class Field:  # класс игрового поля
         print('  ' + figures['coordinates'])  # вывод нижних координат
 
     def move(self, from_x, from_y, to_x, to_y):  # функция, делающая ходы на доске
+        need_to_move = False
         if self.field[from_x][from_y] is not None and self.field[from_x][from_y].can_move(to_x, to_y):
+            need_to_move = True
             self.moves.append((from_x, from_y, to_x, to_y, self.field[to_x][to_y]))  # сохраняем ход
-            self.field[to_x][to_y] = self.field[from_x][from_y]  # если да, ходим
-            self.field[from_x][from_y] = None  # удаляем фигуру из прошлой клетки
-            self.field[to_x][to_y].x = to_x  # меняем координаты фигуры
-            self.field[to_x][to_y].y = to_y  # на новые
-            return True
         elif self.el_passant(from_x, from_y, to_x, to_y):
+            need_to_move = True
             bad_pawn = self.field[self.moves[-1][2]][self.moves[-1][3]]
             self.moves.append((bad_pawn.x, bad_pawn.y, bad_pawn.x, bad_pawn.y, bad_pawn))  # запись рубки на прох.
             self.moves.append((from_x, from_y, to_x, to_y, None))
             self.field[bad_pawn.x][bad_pawn.y] = None
+        if need_to_move:
             self.field[to_x][to_y] = self.field[from_x][from_y]
             self.field[from_x][from_y] = None
+            self.field[to_x][to_y].x = to_x  # меняем координаты фигуры
+            self.field[to_x][to_y].y = to_y  # на новые
             return True
         return False
 
