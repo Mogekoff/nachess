@@ -25,6 +25,8 @@ class Figure:  # базовый класс "фигура"
 class Field:  # класс игрового поля
     field = None
     moves = []
+    king_white = None
+    king_black = None
 
     def __init__(self, field=None, moves=None):  # конструктор принимает массив игрового поля
         if field is None:  # если массив не предоставлен
@@ -34,11 +36,23 @@ class Field:  # класс игрового поля
                 for j in range(8):  #
                     self.field[i][j] = None  # и заполняем его 'None'
             self.draw_classic()
+            self.king_white = self.field[4][0]
+            self.king_black = self.field[4][7]
         else:
             self.field = field
         if moves is not None:
             for i in range(len(moves)):
                 self.move(moves[i][0], moves[i][1], moves[i][2], moves[i][3])
+        for i in range(8):
+            for j in range(8):
+                figure = self.field[i][j]
+                if figure is King:
+                    if figure.color:
+                        self.king_white = figure
+                    else:
+                        self.king_black = figure
+                if not(self.king_white is None or self.king_black is None):
+                    break
 
     def print(self, x=None, y=None):  # функция вывода игрового поля
         cell = False  # итератор для чередования цвета клеток поля
@@ -100,6 +114,12 @@ class Field:  # класс игрового поля
                 return True
         return False
 
+    def check(self):
+        pass
+
+    def checkmate(self):
+        pass
+
     def backtrack(self):
         if len(self.moves) > 0:
             last_move = self.moves[-1]
@@ -108,6 +128,11 @@ class Field:  # класс игрового поля
             back_figure.y = last_move[1]
             self.field[last_move[0]][last_move[1]] = back_figure
             self.field[last_move[2]][last_move[3]] = last_move[4]
+            self.moves.pop()
+        if (isinstance(self.field[last_move[0]][last_move[1]], Pawn) and  # возврат рубки на проходе
+                last_move[4] is None and last_move[0] != last_move[2]):
+            last_move = self.moves[-1]
+            self.field[last_move[0]][last_move[1]] = last_move[4]
             self.moves.pop()
 
     def draw_classic(self):  # устанавливает фигуры в стандартное шахматное расположение

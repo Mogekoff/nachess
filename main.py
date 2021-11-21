@@ -15,6 +15,9 @@ def main():
             x, y, X, Y = int(cmd_split[1]), int(cmd_split[2]), int(cmd_split[3]), int(cmd_split[4])
             field.move(x, y, X, Y)
             field.print()
+        elif cmd_split[0] == 'back':
+            field.backtrack()
+            field.print()
 
 
 if __name__ == '__main__':
