@@ -47,7 +47,7 @@ class Field:  # класс игрового поля
         for i in range(8):
             for j in range(8):
                 figure = self.field[i][j]
-                if not(figure is None):
+                if not (figure is None):
                     if figure.color:
                         self.figures[1].append(figure)
                     else:
@@ -66,7 +66,7 @@ class Field:  # класс игрового поля
             for j in range(8):
                 if (x is not None and y is not None and self.field[x][y] is not None and
                         (self.field[x][y].can_move(j, i) or self.el_passant(x, y, j, i)) and
-                        not self.check_check(x, y, j, i)):
+                        not self.check_check(x, y, j, i, self.field[x][y].color)):
                     add_color = '\033[32m'
                 else:
                     add_color = ''
@@ -97,6 +97,8 @@ class Field:  # класс игрового поля
             self.moves.append((from_x, from_y, to_x, to_y, None))
             self.field[bad_pawn.x][bad_pawn.y] = None
         if need_to_move:
+            if self.field[to_x][to_y] is not None:
+                self.figures[int(self.field[to_x][to_y].color)].remove(self.field[to_x][to_y])
             self.field[to_x][to_y] = self.field[from_x][from_y]
             self.field[from_x][from_y] = None
             self.field[to_x][to_y].x = to_x  # меняем координаты фигуры
@@ -113,7 +115,8 @@ class Field:  # класс игрового поля
                     self.king_black.check = False
                 else:
                     self.king_white.check = False
-                self.check(self.field[to_x][to_y].color, False)
+                if self.check(self.field[to_x][to_y].color, False):
+                    self.checkmate(self.field[to_x][to_y].color)
 
     def el_passant(self, from_x, from_y, to_x, to_y):
         last_move = self.moves[-1]
@@ -133,15 +136,15 @@ class Field:  # класс игрового поля
                 return True
         return False
 
-    def check_check(self, from_x, from_y, to_x, to_y):
+    def check_check(self, from_x, from_y, to_x, to_y, color):   # color - цвет того, кто делает шах
         if self.move(from_x, from_y, to_x, to_y):
-            if self.check(not self.field[to_x][to_y].color, True):
+            if self.check(color, True):
                 self.backtrack()
                 return True
             self.backtrack()
         return False
 
-    def check(self, color, fake):
+    def check(self, color, fake):   # color - цвет того, кто делает шах
         if color:
             for i in self.figures[1]:
                 if i is None:
@@ -164,8 +167,17 @@ class Field:  # класс игрового поля
                 self.king_black.check = False
         return False
 
-    def checkmate(self):
-        pass
+    def checkmate(self, color):  # color - цвет того, кто ставит мат
+        for i in self.figures[int(not color)]:
+            if i is None:
+                continue
+            for j in range(8):
+                for k in range(8):
+                    if ((i.can_move(j, k) or self.el_passant(i.x, i.y, j, k)) and
+                            not self.check_check(i.x, i.y, j, k, color)):
+                        return False
+        print(f"{('White', 'Black')[int(color)]} won!!!")
+        return True
 
     def backtrack(self):
         if len(self.moves) > 0:
@@ -175,12 +187,13 @@ class Field:  # класс игрового поля
             back_figure.y = last_move[1]
             self.field[last_move[0]][last_move[1]] = back_figure
             self.field[last_move[2]][last_move[3]] = last_move[4]
-            self.moves.pop()
         if (isinstance(self.field[last_move[0]][last_move[1]], Pawn) and  # возврат рубки на проходе
                 last_move[4] is None and last_move[0] != last_move[2]):
             last_move = self.moves[-1]
             self.field[last_move[0]][last_move[1]] = last_move[4]
-            self.moves.pop()
+        if last_move[4] is not None:
+            self.figures[int(last_move[4].color)].append(last_move[4])
+        self.moves.pop()
 
     def draw_classic(self):  # устанавливает фигуры в стандартное шахматное расположение
         for i in range(8):
