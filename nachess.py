@@ -27,6 +27,7 @@ class Field:  # класс игрового поля
     moves = []
     king_white = None
     king_black = None
+    figures = [[], []]
 
     def __init__(self, field=None, moves=None):  # конструктор принимает массив игрового поля
         if field is None:  # если массив не предоставлен
@@ -46,13 +47,16 @@ class Field:  # класс игрового поля
         for i in range(8):
             for j in range(8):
                 figure = self.field[i][j]
+                if not(figure is None):
+                    if figure.color:
+                        self.figures[1].append(figure)
+                    else:
+                        self.figures[0].append(figure)
                 if figure is King:
                     if figure.color:
                         self.king_white = figure
                     else:
                         self.king_black = figure
-                if not(self.king_white is None or self.king_black is None):
-                    break
 
     def print(self, x=None, y=None):  # функция вывода игрового поля
         cell = False  # итератор для чередования цвета клеток поля
@@ -60,11 +64,15 @@ class Field:  # класс игрового поля
             # print(i + 1, end=' ')
             print(i, end=' ')  # выводит номер клетки
             for j in range(8):
-                if x is not None and y is not None and (self.field[x][y].can_move(j, i) or self.el_passant(x, y, j, i)):
+                if (x is not None and y is not None and self.field[x][y] is not None and
+                        (self.field[x][y].can_move(j, i) or self.el_passant(x, y, j, i)) and
+                        not self.check_check(x, y, j, i)):
                     add_color = '\033[32m'
                 else:
                     add_color = ''
                 if self.field[j][i] is not None:  # если на клетке есть фигура
+                    if isinstance(self.field[j][i], King) and self.field[j][i].check:
+                        add_color = '\033[31m' + add_color
                     print(add_color + self.field[j][i].icon, end='')  # вывести икноку фигуры
                 elif cell:  # если фигуры нет и клетка черная (True)
                     print(add_color + figures['black']['cell'],
@@ -96,15 +104,26 @@ class Field:  # класс игрового поля
             return True
         return False
 
+    def go(self, from_x, from_y, to_x, to_y):
+        if self.move(from_x, from_y, to_x, to_y):
+            if self.check(not self.field[to_x][to_y].color, True):
+                self.backtrack()
+            else:
+                if self.field[to_x][to_y].color:
+                    self.king_black.check = False
+                else:
+                    self.king_white.check = False
+                self.check(self.field[to_x][to_y].color, False)
+
     def el_passant(self, from_x, from_y, to_x, to_y):
         last_move = self.moves[-1]
         bad_pawn = self.field[last_move[2]][last_move[3]]  # фигура из последнего хода
         my_pawn = self.field[from_x][from_y]
-        if not(isinstance(bad_pawn, Pawn) and abs(bad_pawn.y - last_move[1]) == 2):  # пешка противника сходила на 2
+        if not (isinstance(bad_pawn, Pawn) and abs(bad_pawn.y - last_move[1]) == 2):  # пешка противника сходила на 2
             return False
-        if not(isinstance(my_pawn, Pawn) and bad_pawn.color != my_pawn.color):  # моя пешка это пешка и другого цвета
+        if not (isinstance(my_pawn, Pawn) and bad_pawn.color != my_pawn.color):  # моя пешка это пешка и другого цвета
             return False
-        if not(to_x == bad_pawn.x):
+        if not (to_x == bad_pawn.x):
             return False
         sign = 1
         if my_pawn.color:
@@ -114,8 +133,36 @@ class Field:  # класс игрового поля
                 return True
         return False
 
-    def check(self):
-        pass
+    def check_check(self, from_x, from_y, to_x, to_y):
+        if self.move(from_x, from_y, to_x, to_y):
+            if self.check(not self.field[to_x][to_y].color, True):
+                self.backtrack()
+                return True
+            self.backtrack()
+        return False
+
+    def check(self, color, fake):
+        if color:
+            for i in self.figures[1]:
+                if i is None:
+                    continue
+                if i.can_move(self.king_white.x, self.king_white.y):
+                    if not fake:
+                        self.king_white.check = True
+                    return True
+            if not fake:
+                self.king_white.check = False
+        else:
+            for i in self.figures[0]:
+                if i is None:
+                    continue
+                if i.can_move(self.king_black.x, self.king_black.y):
+                    if not fake:
+                        self.king_black.check = True
+                    return True
+            if not fake:
+                self.king_black.check = False
+        return False
 
     def checkmate(self):
         pass
@@ -268,6 +315,7 @@ class Queen(Bishop, Rook):  # класс фигуры "ферзь", наслед
 
 class King(Figure):  # класс фигуры "конь"
     first_move = False
+    check = False
 
     def __init__(self, x, y, color, field):
         super().__init__(x, y, color, field)
