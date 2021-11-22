@@ -66,8 +66,9 @@ class Field:  # класс игрового поля
             print(i, end=' ')  # выводит номер клетки
             for j in range(8):
                 if (x is not None and y is not None and self.field[x][y] is not None and
-                        (self.field[x][y].can_move(j, i) or self.el_passant(x, y, j, i)) and
-                        not self.check_check(x, y, j, i, self.field[x][y].color)):
+                    (((self.field[x][y].can_move(j, i) or self.el_passant(x, y, j, i)) and
+                        not self.check_check(x, y, j, i, self.field[x][y].color)) or
+                        self.castling(x, y, j, i))):
                     add_color = '\033[32m'
                 else:
                     add_color = ''
@@ -88,7 +89,9 @@ class Field:  # класс игрового поля
 
     def move(self, from_x, from_y, to_x, to_y):  # функция, делающая ходы на доске
         need_to_move = False
-        if self.field[from_x][from_y] is not None and self.field[from_x][from_y].can_move(to_x, to_y):
+        if self.field[from_x][from_y] is None:
+            return False
+        if self.field[from_x][from_y].can_move(to_x, to_y):
             need_to_move = True
             self.moves.append((from_x, from_y, to_x, to_y, self.field[to_x][to_y]))  # сохраняем ход
         elif self.el_passant(from_x, from_y, to_x, to_y):
@@ -97,6 +100,16 @@ class Field:  # класс игрового поля
             self.moves.append((bad_pawn.x, bad_pawn.y, bad_pawn.x, bad_pawn.y, bad_pawn))  # запись рубки на прох.
             self.moves.append((from_x, from_y, to_x, to_y, None))
             self.field[bad_pawn.x][bad_pawn.y] = None
+        elif self.castling(from_x, from_y, to_x, to_y):
+            need_to_move = True
+            rook = None
+            inc = (to_x - from_x) // 2
+            if inc == -1:
+                rook = self.field[0][from_y]
+            elif inc == 1:
+                rook = self.field[7][from_y]
+            self.moves.append((from_x, from_y, to_x, to_y, None))
+            self.move(rook.x, rook.y, self.field[from_x][from_y].x + inc, rook.y)
         if need_to_move:
             if self.field[to_x][to_y] is not None and self.figures != [[], []]:
                 self.figures[int(self.field[to_x][to_y].color)].remove(self.field[to_x][to_y])
@@ -111,15 +124,23 @@ class Field:  # класс игрового поля
         if self.move(from_x, from_y, to_x, to_y):
             if self.check(not self.field[to_x][to_y].color, True):
                 self.backtrack()
+                return False
             else:
                 if self.field[to_x][to_y].color:
-                    self.king_black.check = False
+                    if self.king_black is not None:
+                        self.king_black.check = False
                 else:
-                    self.king_white.check = False
+                    if self.king_white is not None:
+                        self.king_white.check = False
                 if self.check(self.field[to_x][to_y].color, False):
                     self.checkmate(self.field[to_x][to_y].color)
+        if isinstance(self.field[to_x][to_y], King) or isinstance(self.field[to_x][to_y], Rook):
+            self.field[to_x][to_y].first_move = False
+        return True
 
     def el_passant(self, from_x, from_y, to_x, to_y):
+        if len(self.moves) <= 0:
+            return False
         last_move = self.moves[-1]
         bad_pawn = self.field[last_move[2]][last_move[3]]  # фигура из последнего хода
         my_pawn = self.field[from_x][from_y]
@@ -137,6 +158,37 @@ class Field:  # класс игрового поля
                 return True
         return False
 
+    def castling(self, from_x, from_y, to_x, to_y):
+        king = self.field[from_x][from_y]
+        if not isinstance(king, King):
+            return False
+
+        if king.first_move and to_y == king.y and not king.check:
+            rook_left = self.field[0][king.y]
+            rook_right = self.field[7][king.y]
+
+            if not (to_x in (2, 6)):
+                return False
+            inc = (to_x - king.x)//2
+
+            if inc == -1:
+                if not(isinstance(rook_left, Rook) and rook_left.first_move and rook_left.can_move(king.x - 1, king.y)):
+                    return False
+            elif inc == 1:
+                if not(isinstance(rook_right, Rook) and rook_right.first_move and rook_right.can_move(king.x + 1, king.y)):
+                    return False
+
+            if self.move(king.x, king.y, king.x + inc, king.y):
+                if not self.check(not king.color, True):
+                    if self.move(king.x, king.y, king.x + inc, king.y):
+                        if not self.check(not king.color, True):
+                            self.backtrack()
+                            self.backtrack()
+                            return True
+                        self.backtrack()
+                self.backtrack()
+        return False
+
     def check_check(self, from_x, from_y, to_x, to_y, color):   # color - цвет того, кто делает шах
         if self.move(from_x, from_y, to_x, to_y):
             if self.check(color, True):
@@ -150,6 +202,8 @@ class Field:  # класс игрового поля
             for i in self.figures[1]:
                 if i is None:
                     continue
+                if self.king_white is None:
+                    return False
                 if i.can_move(self.king_white.x, self.king_white.y):
                     if not fake:
                         self.king_white.check = True
@@ -160,6 +214,8 @@ class Field:  # класс игрового поля
             for i in self.figures[0]:
                 if i is None:
                     continue
+                if self.king_black is None:
+                    return False
                 if i.can_move(self.king_black.x, self.king_black.y):
                     if not fake:
                         self.king_black.check = True
@@ -188,6 +244,8 @@ class Field:  # класс игрового поля
             back_figure.y = last_move[1]
             self.field[last_move[0]][last_move[1]] = back_figure
             self.field[last_move[2]][last_move[3]] = last_move[4]
+        else:
+            return
         if (isinstance(self.field[last_move[0]][last_move[1]], Pawn) and  # возврат рубки на проходе
                 last_move[4] is None and last_move[0] != last_move[2]):
             last_move = self.moves[-1]
@@ -195,6 +253,16 @@ class Field:  # класс игрового поля
         if last_move[4] is not None:
             self.figures[int(last_move[4].color)].append(last_move[4])
         self.moves.pop()
+        if len(self.moves) > 0:
+            new_last_move = self.moves[-1]
+            inc = new_last_move[0] - new_last_move[2]
+            if abs(inc) == 2:
+                self.field[new_last_move[2]][new_last_move[3]].first_move = True
+                if inc > 0:
+                    self.field[0][new_last_move[1]].first_move = True
+                else:
+                    self.field[7][new_last_move[1]].first_move = True
+                self.backtrack()
 
     def draw_classic(self):  # устанавливает фигуры в стандартное шахматное расположение
         for i in range(8):
@@ -285,7 +353,6 @@ class Rook(Figure):  # класс ладьи
                         return False  # если встретили препятствие по пути
             else:
                 return False  # если ходим не по горизонтали и не вертикали
-            self.first_move = False
             return True  # если прошли прошлые две проверки
         return False  # если не прошли базовую проверку
 
@@ -345,6 +412,5 @@ class King(Figure):  # класс фигуры "конь"
     def can_move(self, x, y):
         if super().can_move(x, y):
             if (-1 <= self.x - x <= 1) and (-1 <= self.y - y <= 1):
-                self.first_move = False
                 return True
         return False
