@@ -93,7 +93,11 @@ class Field:  # класс игрового поля
             return False
         if self.field[from_x][from_y].can_move(to_x, to_y):
             need_to_move = True
-            self.moves.append((from_x, from_y, to_x, to_y, self.field[to_x][to_y]))  # сохраняем ход
+            if (isinstance(self.field[from_x][from_y], King) or isinstance(self.field[from_x][from_y], Rook) and
+                    self.field[from_x][from_y].first_move):
+                        self.moves.append((from_x, from_y, to_x, to_y, self.field[to_x][to_y], True))
+            else:
+                self.moves.append((from_x, from_y, to_x, to_y, self.field[to_x][to_y]))  # сохраняем ход
         elif self.el_passant(from_x, from_y, to_x, to_y):
             need_to_move = True
             bad_pawn = self.field[self.moves[-1][2]][self.moves[-1][3]]
@@ -244,6 +248,8 @@ class Field:  # класс игрового поля
             back_figure.y = last_move[1]
             self.field[last_move[0]][last_move[1]] = back_figure
             self.field[last_move[2]][last_move[3]] = last_move[4]
+            if len(last_move)==6:
+                back_figure.first_move = True
         else:
             return
         if (isinstance(self.field[last_move[0]][last_move[1]], Pawn) and  # возврат рубки на проходе
