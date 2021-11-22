@@ -42,6 +42,7 @@ class Field:  # класс игрового поля
         else:
             self.field = field
         if moves is not None:
+            print(range(len(moves)))
             for i in range(len(moves)):
                 self.move(moves[i][0], moves[i][1], moves[i][2], moves[i][3])
         for i in range(8):
@@ -97,7 +98,7 @@ class Field:  # класс игрового поля
             self.moves.append((from_x, from_y, to_x, to_y, None))
             self.field[bad_pawn.x][bad_pawn.y] = None
         if need_to_move:
-            if self.field[to_x][to_y] is not None:
+            if self.field[to_x][to_y] is not None and self.figures != [[], []]:
                 self.figures[int(self.field[to_x][to_y].color)].remove(self.field[to_x][to_y])
             self.field[to_x][to_y] = self.field[from_x][from_y]
             self.field[from_x][from_y] = None
